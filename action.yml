@@ -1,0 +1,42 @@
+name: 'GitHub Actions Deep Forensic'
+description: 'Analyse les workflows GitHub Actions pour détecter les échecs cachés et les vulnérabilités de sécurité'
+author: 'Manus AI'
+
+branding:
+  icon: 'search'
+  color: 'red'
+
+inputs:
+  repository:
+    description: 'Le dépôt à analyser (format: owner/repo)'
+    required: true
+  github-token:
+    description: 'Token GitHub pour l\'authentification API'
+    required: true
+  deep-scan:
+    description: 'Active une analyse approfondie des logs'
+    required: false
+    default: 'false'
+  max-runs:
+    description: 'Nombre maximum d\'exécutions à analyser'
+    required: false
+    default: '50'
+  output-format:
+    description: 'Format du rapport (json, markdown, both)'
+    required: false
+    default: 'both'
+
+outputs:
+  hidden-failures:
+    description: 'Nombre d\'échecs cachés détectés'
+  critical-issues:
+    description: 'Liste JSON des problèmes critiques'
+  report-path:
+    description: 'Chemin vers le fichier de rapport généré'
+  success:
+    description: 'Booléen indiquant si l\'analyse a réussi'
+
+runs:
+  using: 'node20'
+  main: 'src/main.js'
+

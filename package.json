@@ -1,0 +1,37 @@
+{
+  "name": "github-actions-forensic-agent",
+  "version": "1.0.0",
+  "description": "Agent d'analyse forensique pour GitHub Actions",
+  "main": "src/main.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "jest",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "start": "node src/main.js"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "@octokit/rest": "^19.0.0",
+    "js-yaml": "^4.1.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^2.8.0"
+  },
+  "keywords": [
+    "github-actions",
+    "forensic",
+    "security",
+    "ci-cd",
+    "analysis"
+  ],
+  "author": "Manus AI",
+  "license": "MIT"
+}
+
