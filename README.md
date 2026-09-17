@@ -1,282 +1,150 @@
-# 🔍 GitHub Actions Deep Forensic Agent
+# GitHub Actions Forensic Agent
 
-[![Build Status](https://github.com/votre-username/github-actions-forensic-agent/workflows/Test/badge.svg)](https://github.com/votre-username/github-actions-forensic-agent/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/votre-username/github-actions-forensic-agent/releases)
+[![Release](https://img.shields.io/github/v/release/ehadsagency-ai/github-actions-forensic-agent)](https://github.com/ehadsagency-ai/github-actions-forensic-agent/releases/latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Runs on](https://img.shields.io/badge/runs-node20-green.svg)](action.yml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/ehadsagency-ai/github-actions-forensic-agent/releases/tag/v1.0.0)
 
-Un agent d'analyse forensique avancé pour GitHub Actions qui détecte les échecs masqués, les vulnérabilités de sécurité et les problèmes de configuration dans vos workflows CI/CD.
+> GitHub Action that scans workflow runs for **hidden failures**, **secret-like log smells**, **dangerous shell patterns**, and **over-broad permissions**, then writes a Markdown/JSON forensic report.
 
-## 🎯 Fonctionnalités
+**Honest metrics (2026-09-17T15:10:00CEST):** ★0 · forks 0 · 1 author · 0 commits/7d · Release **v1.0.0** · GitHub Marketplace **not submitted** · Hype Score **7/25**.
 
-- **🔍 Détection d'échecs masqués** : Identifie les jobs qui échouent silencieusement avec `continue-on-error`
-- **🚨 Analyse de sécurité** : Détecte les secrets exposés, les commandes dangereuses et les permissions excessives
-- **📊 Rapports détaillés** : Génère des rapports complets en Markdown et JSON
-- **⚡ Analyse des performances** : Identifie les dégradations de performance et les timeouts
-- **🎯 Annotations GitHub** : Crée automatiquement des annotations pour les problèmes critiques
-- **📈 Score de risque** : Calcule un score de risque global pour votre infrastructure CI/CD
+---
 
-## 🚀 Installation et Utilisation
+## What it detects
 
-### Utilisation Basique
+Aligned with live README + `action.yml` intent:
 
-Ajoutez cette action à votre workflow GitHub :
+| Severity band (docs) | Examples |
+|----------------------|----------|
+| Critical | Secret-like strings in logs; `curl \| bash` / `wget \| sh`; overly broad permissions (`write-all`) |
+| High | Jobs failing under `continue-on-error`; unpinned actions; unaudited self-hosted runners |
+| Medium | Runtime degradation / frequent timeouts; skipped tests without justification |
+| Low | Ignored warnings; optional performance suggestions |
+
+Also documented: risk score summarization, Markdown + JSON reports, optional GitHub annotations.
+
+---
+
+## Quick start
 
 ```yaml
-name: Analyse Forensique
+name: Forensic audit
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Analyse quotidienne à 2h du matin
-  workflow_dispatch: # Déclenchement manuel
+    - cron: '0 2 * * *'
+  workflow_dispatch:
 
 jobs:
   forensic-analysis:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      checks: write   # optional — annotations
     steps:
-      - name: Analyse forensique des workflows
-        uses: votre-username/github-actions-forensic-agent@v1
-        with:
-          repository: ${{ github.repository }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deep-scan: true
-          output-format: 'both'
-```
-
-### Utilisation Avancée
-
-```yaml
-name: Analyse Forensique Avancée
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  security-audit:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Analyse forensique complète
+      - name: Forensic audit
         id: forensic
-        uses: votre-username/github-actions-forensic-agent@v1
+        uses: ehadsagency-ai/github-actions-forensic-agent@v1.0.0
         with:
           repository: ${{ github.repository }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          deep-scan: true
-          max-runs: 100
+          deep-scan: 'true'
           output-format: 'both'
 
-      - name: Échec si problèmes critiques
-        if: steps.forensic.outputs.critical-issues != '[]'
-        run: |
-          echo "🚨 Problèmes critiques détectés!"
-          echo "${{ steps.forensic.outputs.critical-issues }}"
-          exit 1
-
-      - name: Upload du rapport
+      - name: Upload report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: forensic-report
           path: ${{ steps.forensic.outputs.report-path }}
-
-      - name: Notification Slack
-        if: steps.forensic.outputs.hidden-failures > 0
-        uses: 8398a7/action-slack@v3
-        with:
-          status: warning
-          text: "🔍 ${{ steps.forensic.outputs.hidden-failures }} échecs cachés détectés dans les workflows"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 ```
 
-## 📋 Paramètres
-
-### Entrées (Inputs)
-
-| Paramètre | Description | Requis | Défaut |
-|-----------|-------------|---------|---------|
-| `repository` | Dépôt à analyser (format: `owner/repo`) | ✅ | - |
-| `github-token` | Token GitHub pour l'authentification API | ✅ | - |
-| `deep-scan` | Active l'analyse approfondie des logs | ❌ | `false` |
-| `max-runs` | Nombre maximum d'exécutions à analyser | ❌ | `50` |
-| `output-format` | Format du rapport (`json`, `markdown`, `both`) | ❌ | `both` |
-
-### Sorties (Outputs)
-
-| Paramètre | Description |
-|-----------|-------------|
-| `hidden-failures` | Nombre d'échecs cachés détectés |
-| `critical-issues` | Liste JSON des problèmes critiques |
-| `report-path` | Chemin vers le fichier de rapport généré |
-| `success` | Booléen indiquant si l'analyse a réussi |
-
-## 🔍 Types de Problèmes Détectés
-
-### 🚨 Problèmes Critiques
-- **Secrets exposés** : Détection de mots de passe, tokens ou clés API dans les logs
-- **Commandes dangereuses** : `curl | bash`, `wget | sh`, etc.
-- **Permissions excessives** : `write-all` ou permissions trop larges
-
-### ⚠️ Problèmes de Haute Sévérité
-- **Échecs masqués** : Jobs qui échouent avec `continue-on-error: true`
-- **Actions non versionnées** : Utilisation d'actions sans tag de version
-- **Runners non sécurisés** : Utilisation de runners self-hosted non auditées
-
-### ⚡ Problèmes de Sévérité Moyenne
-- **Dégradation des performances** : Augmentation des temps d'exécution
-- **Tests sautés** : Tests désactivés sans justification
-- **Timeouts fréquents** : Jobs qui dépassent régulièrement les limites de temps
-
-### 💡 Problèmes de Faible Sévérité
-- **Warnings ignorés** : Messages d'avertissement non traités
-- **Optimisations possibles** : Suggestions d'amélioration des performances
-
-## 📊 Exemple de Rapport
-
-```markdown
-# 🔍 Rapport d'Analyse Forensique GitHub Actions
-
-**Dépôt:** `mon-org/mon-projet`
-**Date d'analyse:** 14/09/2025 10:30:25
-
-## 📊 Résumé Exécutif
-
-| Métrique | Valeur |
-|----------|--------|
-| 🔧 Workflows analysés | 12 |
-| 🔍 Problèmes détectés | 8 |
-| 👻 Échecs cachés | 2 |
-| 🚨 Problèmes critiques | 1 |
-| 📊 Score de risque | 45/100 |
-
-### Interprétation du Score de Risque
-
-⚡ **RISQUE MODÉRÉ** (45/100): Quelques améliorations sont recommandées pour optimiser la sécurité et la fiabilité.
-
-## 🚨 Problèmes Critiques (Action Immédiate Requise)
-
-### 🚨 EXPOSED_SECRET
-
-**Message:** Secret potentiellement exposé dans les logs
-**Workflow:** `deploy.yml`
-**Recommandation:** Utiliser des secrets GitHub et éviter de logger des informations sensibles
-```
-
-## 🛠️ Développement
-
-### Prérequis
-- Node.js 20+
-- npm ou yarn
-
-### Installation
-```bash
-git clone https://github.com/votre-username/github-actions-forensic-agent.git
-cd github-actions-forensic-agent
-npm install
-```
-
-### Tests
-```bash
-# Tests unitaires
-npm test
-
-# Linting
-npm run lint
-
-# Formatage du code
-npm run format
-```
-
-### Structure du Projet
-```
-github-actions-forensic-agent/
-├── action.yml              # Définition de l'action
-├── src/
-│   ├── main.js             # Point d'entrée principal
-│   ├── github-api.js       # Interface GitHub API
-│   ├── analyzer.js         # Moteur d'analyse forensique
-│   └── reporter.js         # Générateur de rapports
-├── .github/workflows/
-│   └── test.yml           # Tests automatisés
-├── package.json
-└── README.md
-```
-
-## 🔒 Sécurité
-
-### Permissions Requises
-
-Cette action nécessite les permissions GitHub suivantes :
-- `actions: read` - Pour lire les workflows et exécutions
-- `contents: read` - Pour accéder au contenu des fichiers de workflow
-- `checks: write` - Pour créer des annotations (optionnel)
-
-### Bonnes Pratiques
-
-1. **Utilisez toujours un token avec des permissions minimales**
-2. **Exécutez l'action sur des runners de confiance**
-3. **Auditez régulièrement les rapports générés**
-4. **Ne partagez jamais les rapports contenant des informations sensibles**
-
-## 🤝 Contribution
-
-Les contributions sont les bienvenues ! Voici comment contribuer :
-
-1. **Fork** le projet
-2. **Créez** une branche pour votre fonctionnalité (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. **Committez** vos changements (`git commit -am 'Ajout d'une nouvelle fonctionnalité'`)
-4. **Poussez** vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
-5. **Ouvrez** une Pull Request
-
-### Guidelines de Contribution
-
-- Suivez les conventions de code existantes
-- Ajoutez des tests pour les nouvelles fonctionnalités
-- Mettez à jour la documentation si nécessaire
-- Assurez-vous que tous les tests passent
-
-## 🐛 Dépannage
-
-### Problèmes Courants
-
-#### Erreur d'authentification
-```
-Error: Bad credentials
-```
-**Solution :** Vérifiez que votre `GITHUB_TOKEN` est valide et a les permissions nécessaires.
-
-#### Timeout lors de l'analyse
-```
-Error: Request timeout
-```
-**Solution :** Réduisez le paramètre `max-runs` ou désactivez `deep-scan` pour les gros dépôts.
-
-#### Rapport non généré
-```
-Error: Cannot write file
-```
-**Solution :** Vérifiez les permissions d'écriture dans le répertoire de travail.
-
-### Support
-
-- 📖 [Documentation complète](https://github.com/votre-username/github-actions-forensic-agent/wiki)
-- 🐛 [Signaler un bug](https://github.com/votre-username/github-actions-forensic-agent/issues)
-- 💬 [Discussions](https://github.com/votre-username/github-actions-forensic-agent/discussions)
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
-## 🙏 Remerciements
-
-- L'équipe GitHub Actions pour l'excellente API
-- La communauté open source pour les outils et bibliothèques utilisés
-- Tous les contributeurs qui ont aidé à améliorer cet outil
+Pin to **`@v1.0.0`** (or a commit SHA) rather than a floating branch.
 
 ---
 
-**Développé avec ❤️ par [Manus AI](https://github.com/manus-ai)**
+## Action inputs & outputs
 
-*Pour plus d'outils de sécurité et d'analyse CI/CD, visitez notre [organisation GitHub](https://github.com/manus-ai).*
+From live `action.yml`:
 
+### Inputs
+
+| Name | Required | Default | Description |
+|------|----------|---------|-------------|
+| `repository` | yes | — | Target repo `owner/repo` |
+| `github-token` | yes | — | Token for GitHub API |
+| `deep-scan` | no | `false` | Deeper log analysis |
+| `max-runs` | no | `50` | Max workflow runs to inspect |
+| `output-format` | no | `both` | `json` · `markdown` · `both` |
+
+### Outputs
+
+| Name | Description |
+|------|-------------|
+| `hidden-failures` | Count of hidden failures detected |
+| `critical-issues` | JSON list of critical findings |
+| `report-path` | Path to generated report file |
+| `success` | Whether the analysis completed successfully |
+
+**Runtime:** `node20` · entry `src/main.js`
+
+---
+
+## Architecture (one-liner)
+
+Composite Node 20 action: GitHub API client → forensic analyzer → reporter (`src/github-api.js`, `analyzer.js`, `reporter.js` per live tree docs).
+
+---
+
+## Limitations & threat honesty
+
+- **Not a substitute** for secret scanning products, SCA, or a full red-team of your CI. Heuristics can **false-positive** (benign tokens in logs) or **miss** obfuscated leaks.
+- Needs a token that can **read** Actions / workflow data; over-privileged tokens increase blast radius — prefer least privilege.
+- Deep scans on large repos may **rate-limit** or timeout — lower `max-runs` or disable `deep-scan`.
+- Reports may contain sensitive snippets — treat artifacts as **restricted**.
+- Marketplace listing, third-party audits, and SLA numbers: **none verified** — do not claim them.
+- Upstream README language is primarily **French**; this draft is EN for portfolio clarity.
+
+---
+
+## Local development
+
+```bash
+git clone https://github.com/ehadsagency-ai/github-actions-forensic-agent.git
+cd github-actions-forensic-agent
+npm install
+npm test
+npm run lint
+```
+
+Requires Node.js 20+.
+
+---
+
+## Status
+
+| Item | State |
+|------|-------|
+| Release | ✅ **v1.0.0** (2025-09-14) |
+| `action.yml` | ✅ present |
+| Marketplace | ❌ not submitted (planned if approved) |
+| Stars / forks | 0 / 0 |
+| Owner / `uses:` examples | `ehadsagency-ai` |
+
+---
+
+## Contributing
+
+PRs welcome: new detectors, EN/FR docs parity, tests, and permission-scope docs.
+
+1. Fork → feature branch  
+2. `npm test` / `npm run lint`  
+3. Open a PR against `ehadsagency-ai/github-actions-forensic-agent`
+
+---
+
+## License
+
+MIT · © ehadsagency-ai
