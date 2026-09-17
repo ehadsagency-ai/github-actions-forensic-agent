@@ -1,6 +1,6 @@
-name: 'GitHub Actions Deep Forensic'
-description: 'Analyse les workflows GitHub Actions pour détecter les échecs cachés et les vulnérabilités de sécurité'
-author: 'Manus AI'
+name: 'GitHub Actions Forensic Agent'
+description: 'Scan workflow runs for hidden failures, secret-like log smells, dangerous shell patterns, and over-broad permissions.'
+author: 'ehadsagency-ai'
 
 branding:
   icon: 'search'
@@ -8,35 +8,34 @@ branding:
 
 inputs:
   repository:
-    description: 'Le dépôt à analyser (format: owner/repo)'
+    description: 'Repository to analyze (format: owner/repo)'
     required: true
   github-token:
-    description: 'Token GitHub pour l\'authentification API'
+    description: 'GitHub token for API authentication'
     required: true
   deep-scan:
-    description: 'Active une analyse approfondie des logs'
+    description: 'Enable deeper log analysis'
     required: false
     default: 'false'
   max-runs:
-    description: 'Nombre maximum d\'exécutions à analyser'
+    description: 'Maximum number of workflow runs to inspect'
     required: false
     default: '50'
   output-format:
-    description: 'Format du rapport (json, markdown, both)'
+    description: 'Report format (json, markdown, both)'
     required: false
     default: 'both'
 
 outputs:
   hidden-failures:
-    description: 'Nombre d\'échecs cachés détectés'
+    description: 'Count of hidden failures detected'
   critical-issues:
-    description: 'Liste JSON des problèmes critiques'
+    description: 'JSON list of critical findings'
   report-path:
-    description: 'Chemin vers le fichier de rapport généré'
+    description: 'Path to the generated report file'
   success:
-    description: 'Booléen indiquant si l\'analyse a réussi'
+    description: 'Whether the analysis completed successfully'
 
 runs:
   using: 'node20'
   main: 'src/main.js'
-
